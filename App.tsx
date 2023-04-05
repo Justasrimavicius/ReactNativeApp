@@ -1,12 +1,19 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+    
+import StartView from './Components/StartView';
+import BrowseView from './Components/BrowseView';
+import StatusBar from './Components/StatusBar';
 export default function App() {
+  const [browse, showBrowse] = useState<Boolean>(false);
+  useEffect(()=>{
+    console.log(browse)
+  },[browse])
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <StatusBar backgroundColor="white" barStyle="dark-content" />
+      {browse === false ? <StartView showBrowse={showBrowse}/>
+      : <BrowseView></BrowseView>}
     </View>
   );
 }
