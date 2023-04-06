@@ -7,7 +7,6 @@ interface props{
   id: number,
   showPage: React.Dispatch<React.SetStateAction<string>>
 }
-
 interface movieData{
     original_title: string,
     overview: string,
@@ -17,9 +16,17 @@ interface movieData{
     tagline: string,
     poster_path: string
 }
+interface similarMovieDataInterface{
+    original_title: string,
+    id: number,
+    poster_path: string,
+}
 
 export default function SpecificMovie(props: props) {
+
     const [movieData, setMovieData] = useState<movieData | null>(null);
+    const [similarMovieData, setSimilarMovieData] = useState<similarMovieDataInterface[]>([]);
+
     useEffect(()=>{
         fetch(`https://api.themoviedb.org/3/movie/` + props.id + `?api_key=` + APIkey + `&language=en-US`)
           .then(result => {result.json()
@@ -34,6 +41,16 @@ export default function SpecificMovie(props: props) {
                 poster_path: data.poster_path
             })
             )})
+        fetch('https://api.themoviedb.org/3/movie/' + props.id + '/similar?api_key=' + APIkey + '&language=en-US&page=1')
+          .then(result => {result.json()
+          .then(data => {
+            let tempSimilarMovieData:similarMovieDataInterface[] = [];
+            data.results.forEach((singleMovie: any) =>{
+                tempSimilarMovieData.push({id: singleMovie.id, original_title: singleMovie.original_title, poster_path: singleMovie.poster_path});
+            })
+            setSimilarMovieData(tempSimilarMovieData);
+        }
+          )})
     },[])
 
     return (
@@ -50,16 +67,29 @@ export default function SpecificMovie(props: props) {
                     <Image
                         style={styles.poster}
                         source={{uri: `https://image.tmdb.org/t/p/w500/${movieData.poster_path}`}}
+                        defaultSource={require('../defaultPhoto.jpeg')}
                     />
                     <View style={styles.lowerInfo}>
                         <Text style={styles.infoText}>Popularity rating: {movieData.popularity.toFixed(2)}</Text>
                         <Text style={styles.infoText}>Revenue: {(movieData.revenue).toLocaleString('en-US', {style: 'currency', currency: 'USD',})}({(movieData.revenue/1000000).toFixed(2)}m $)</Text>
-                        <Text style={{...styles.infoText, width: Dimensions.get('window').width, borderColor: 'black', borderBottomWidth: 1, textAlign: 'center', paddingBottom: 0}}>Released on {movieData.release_date}</Text>
+                        <Text style={{...styles.infoText, width: Dimensions.get('window').width, textAlign: 'center', paddingBottom: 0}}>Released/To be released on {movieData.release_date}</Text>
                         <Text style={{...styles.infoText, marginTop: 20 }}>{movieData.overview}</Text>
                     </View>
-                    <View>
-                        {/* Recomended similar movies here */}
-                    </View>
+                    <Text style={styles.similarMoviesHeader}>Similar movies</Text>
+                    <ScrollView style={styles.allSimilarMoviesContainer} horizontal={true}>
+                        {similarMovieData?.map((singleMovie: similarMovieDataInterface) => {
+                            return <View key={singleMovie.id} style={styles.singleSmilarMovie}>
+                                <Text style={styles.similarMovieTitle}>{singleMovie.original_title}</Text>
+                                <Image
+                                    style={styles.similarMoviePoster}
+                                    source={{uri: `https://image.tmdb.org/t/p/w200/${singleMovie.poster_path}`}}
+                                    defaultSource={require('../defaultPhoto.jpeg')}
+                                />
+                                <TouchableOpacity style={styles.similarMovieInDepthButton} onPress={()=>{props.showPage(`${singleMovie.id}`);}}><Text style={{textAlign: 'center'}}>In depth</Text></TouchableOpacity>
+                            </View>
+                        })}
+                    </ScrollView>
+                    <TouchableOpacity style={styles.watchTrailerButton}><Text style={styles.watchTrailerText}>Watch trailer</Text></TouchableOpacity>
                 </ScrollView>
 
                 
@@ -76,13 +106,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  similarMovieInDepthButton: {
+    backgroundColor: 'rgb(250, 255, 250)',
+    borderColor: 'black',
+    borderWidth: 1,
+    borderRadius: 3,
+    margin: 35,
+    marginTop: 20,
+    padding: 5,
+    justifyContent: 'center',
+  },
+  watchTrailerButton: {
+    backgroundColor: 'rgba(200, 200, 200, 0.3)',
+    padding: 10,
+    marginLeft: 20,
+    marginRight: 20,
+    marginTop: 0,
+    marginBottom: 50,
+    borderColor: 'black',
+    shadowRadius: 3,
+    shadowColor: 'gray',
+    shadowOffset: {width: 3, height: 3}, 
+    shadowOpacity: 0.2,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  watchTrailerText: {
+    fontSize: 30,
+    fontWeight: '600'
+  },
+  allSimilarMoviesContainer:{
+    flexDirection: 'row',
+    marginBottom: 40,
+    marginTop: 10,
+    padding: 5,
+    borderTopColor: 'black',
+    borderTopWidth: 3
+  },
+  singleSmilarMovie: {
+    justifyContent: 'center',
+    flex: 1,
+  },
   loadingText: {
     fontSize: 20
   },
   infoText: {
     margin: 5,
     width: Dimensions.get('window').width,
-    textAlign: 'center'
+    textAlign: 'center',
+    fontSize: 17
   },
   poster: {
     width: Dimensions.get('window').width,
@@ -90,6 +162,22 @@ const styles = StyleSheet.create({
     height: Dimensions.get('window').height * 0.5,
     backgroundColor: 'rgb(250, 255, 250)',
     marginBottom: 20
+  },
+  similarMoviePoster: {
+    resizeMode: 'contain',
+    width: Dimensions.get('window').width * 0.5,
+    height: 200
+  },
+  similarMovieTitle: {
+    textAlign: 'center',
+    maxWidth: Dimensions.get('window').width * 0.5,
+    minHeight: 40,
+  },
+  similarMoviesHeader: {
+    textAlign: 'center',
+    fontSize: 25,
+    fontWeight: 'bold',
+    marginTop: 10
   },
   original_title: {
     textAlign: 'center',

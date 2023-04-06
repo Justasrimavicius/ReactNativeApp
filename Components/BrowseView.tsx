@@ -11,14 +11,13 @@ interface movieDataInterface{
 }
 
 interface props{
-    setSpecificMovieId: React.Dispatch<React.SetStateAction<number>>
+    showPage: React.Dispatch<React.SetStateAction<string>>
 }
 
 export default function BrowseView(props: props) {
 
     const [request, setRequest] = useState<string>('mostPopular');
     const [movieData, setMovieData] = useState<movieDataInterface[] | null>(null);
-    const [singleMovieDetails, loadSingleMovieDetails] = useState<number>(-1);
     
     async function movieFetch(link: string){
         fetch(link)
@@ -137,11 +136,12 @@ export default function BrowseView(props: props) {
                             <Text>Id: {singleMovie.id}</Text>
                             <Text style={{textAlign: 'center'}}>Popularity rating: {singleMovie.popularity}</Text>
                             <Text style={{textAlign: 'center'}}>Vote average: {singleMovie.vote_average}</Text>
-                            <TouchableOpacity style={styles.inDepthButton} onPress={()=>{props.setSpecificMovieId(singleMovie.id)}}><Text style={{textAlign: 'center', fontWeight: 'bold'}}>In depth</Text></TouchableOpacity>
+                            <TouchableOpacity style={styles.inDepthButton} onPress={()=>{props.showPage(`${singleMovie.id}`)}}><Text style={{textAlign: 'center', fontWeight: 'bold'}}>In depth</Text></TouchableOpacity>
                         </View>
                         <Image
                             style={styles.poster}
                             source={{uri: `https://image.tmdb.org/t/p/w200/${singleMovie.poster_path}`}}
+                            defaultSource={require('../defaultPhoto.jpeg')}
                         />
                     </View>
             })}
