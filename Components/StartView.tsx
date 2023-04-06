@@ -1,7 +1,7 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface props{
-  showBrowse: React.Dispatch<React.SetStateAction<Boolean>>
+  showPage: React.Dispatch<React.SetStateAction<string>>
 }
 
 export default function StartView(props: props) {
@@ -9,7 +9,7 @@ export default function StartView(props: props) {
   return (
     <View style={styles.container}>
       <Text style={styles.headText}>Flexn project</Text>
-      <TouchableOpacity onPress={()=>{props.showBrowse(true)}}
+      <TouchableOpacity onPress={()=>{props.showPage('browseView')}}
         style={styles.button}>
         <Text style={styles.buttonText}>Browse</Text>
       </TouchableOpacity>
