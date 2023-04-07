@@ -24,79 +24,99 @@ interface similarMovieDataInterface{
 
 export default function SpecificMovie(props: props) {
 
-    const [movieData, setMovieData] = useState<movieData | null>(null);
-    const [similarMovieData, setSimilarMovieData] = useState<similarMovieDataInterface[]>([]);
+    const [movieData, setMovieData] = useState<movieData | null | undefined>();
+    const [similarMovieData, setSimilarMovieData] = useState<similarMovieDataInterface[] | null | undefined>(undefined);
 
     useEffect(()=>{
-        fetch(`https://api.themoviedb.org/3/movie/` + props.id + `?api_key=` + APIkey + `&language=en-US`)
-          .then(result => {result.json()
-          .then(data => 
-            setMovieData({
-                original_title: data.original_title,
-                overview: data.overview,
-                popularity: data.popularity,
-                release_date: data.release_date,
-                revenue: data.revenue || null,
-                tagline: data.tagline,
-                poster_path: data.poster_path
-            })
-            )})
-        fetch('https://api.themoviedb.org/3/movie/' + props.id + '/similar?api_key=' + APIkey + '&language=en-US&page=1')
-          .then(result => {result.json()
-          .then(data => {
-            let tempSimilarMovieData:similarMovieDataInterface[] = [];
-            data.results.forEach((singleMovie: any) =>{
-                tempSimilarMovieData.push({id: singleMovie.id, original_title: singleMovie.original_title, poster_path: singleMovie.poster_path});
-            })
-            setSimilarMovieData(tempSimilarMovieData);
+      fetch(`https://api.themoviedb.org/3/movie/` + props.id + `?api_key=` + APIkey + `&language=en-US`)
+        .then(possibleError => {
+          if(possibleError.ok) return possibleError;
+          throw new Error(possibleError.statusText);
+        })
+        .then(result => result.json()
+        .then(data => 
+          setMovieData({
+            original_title: data.original_title,
+            overview: data.overview,
+            popularity: data.popularity,
+            release_date: data.release_date,
+            revenue: data.revenue || null,
+            tagline: data.tagline,
+            poster_path: data.poster_path
+          })
+        ))
+        .catch(error => {
+          setMovieData(null);
+        })
+      fetch('https://api.themoviedb.org/3/movie/' + props.id + '/similar?api_key=' + APIkey + '&language=en-US&page=1')
+        .then(possibleError => {
+          if(possibleError.ok) return possibleError;
+          throw new Error(possibleError.statusText);
+        })
+        .then(result => result.json()
+        .then(data => {
+          let tempSimilarMovieData:similarMovieDataInterface[] = [];
+          data.results.forEach((singleMovie: any) =>{
+              tempSimilarMovieData.push({id: singleMovie.id, original_title: singleMovie.original_title, poster_path: singleMovie.poster_path});
+          })
+          setSimilarMovieData(tempSimilarMovieData);
         }
-          )})
+        ))
+        .catch(err => {
+          setSimilarMovieData(null);
+        })
     },[])
 
     return (
         <View style={styles.container}>
-            {movieData !== null ? 
-            <View style={{}}>
-                <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                    <Icon name="arrow-left" size={20} color="black" style={{marginLeft: 10, alignSelf: 'center'}} onPress={() => {props.showPage('browseView')}}/>
-                    <Text style={{...styles.original_title}}>{movieData.original_title}</Text>
-                    <Icon name="arrow-left" size={20} color="rgba(0,0,0,0)" style={{marginRight: 10, alignSelf: 'center'}} />
+          {movieData !== null && movieData !== undefined ? 
+          <View style={{}}>
+            <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+              <Icon name="arrow-left" size={20} color="black" style={{marginLeft: 10, alignSelf: 'center'}} onPress={() => {props.showPage('browseView')}}/>
+                <Text style={{...styles.original_title}}>{movieData.original_title}</Text>
+                <Icon name="arrow-left" size={20} color="rgba(0,0,0,0)" style={{marginRight: 10, alignSelf: 'center'}} />
 
-                </View>
-                <ScrollView>
+            </View>
+            <ScrollView>
+              <Image
+                style={styles.poster}
+                source={{uri: `https://image.tmdb.org/t/p/w500/${movieData.poster_path}`}}
+                defaultSource={require('../defaultPhoto.jpeg')}
+              />
+              <View style={styles.lowerInfo}>
+                <Text style={styles.infoText}>Popularity rating: {movieData.popularity.toFixed(2)}</Text>
+                {movieData.revenue !== null ? <Text style={styles.infoText}>Revenue: {(movieData.revenue).toLocaleString('en-US', {style: 'currency', currency: 'USD',})}({(movieData.revenue/1000000).toFixed(2)}m $)</Text>
+                : <Text style={styles.infoText}>Revenue: No information/Not yet released</Text>}
+                <Text style={{...styles.infoText, width: Dimensions.get('window').width, textAlign: 'center', paddingBottom: 0}}>Released/To be released on {movieData.release_date}</Text>
+                <Text style={{...styles.infoText, marginTop: 20 }}>{movieData.overview}</Text>
+              </View>
+              <Text style={styles.similarMoviesHeader}>Similar movies</Text>
+              <ScrollView style={styles.allSimilarMoviesContainer} horizontal={true}>
+
+                {similarMovieData !== null && similarMovieData !== undefined ? similarMovieData.map((singleMovie: similarMovieDataInterface) => {
+                  return <View key={singleMovie.id} style={styles.singleSmilarMovie}>
+                    <Text style={styles.similarMovieTitle}>{singleMovie.original_title}</Text>
                     <Image
-                        style={styles.poster}
-                        source={{uri: `https://image.tmdb.org/t/p/w500/${movieData.poster_path}`}}
+                        style={styles.similarMoviePoster}
+                        source={{uri: `https://image.tmdb.org/t/p/w200/${singleMovie.poster_path}`}}
                         defaultSource={require('../defaultPhoto.jpeg')}
                     />
-                    <View style={styles.lowerInfo}>
-                        <Text style={styles.infoText}>Popularity rating: {movieData.popularity.toFixed(2)}</Text>
-                        {movieData.revenue !== null ? <Text style={styles.infoText}>Revenue: {(movieData.revenue).toLocaleString('en-US', {style: 'currency', currency: 'USD',})}({(movieData.revenue/1000000).toFixed(2)}m $)</Text>
-                        : <Text style={styles.infoText}>Revenue: No information/Not yet released</Text>}
-                        <Text style={{...styles.infoText, width: Dimensions.get('window').width, textAlign: 'center', paddingBottom: 0}}>Released/To be released on {movieData.release_date}</Text>
-                        <Text style={{...styles.infoText, marginTop: 20 }}>{movieData.overview}</Text>
-                    </View>
-                    <Text style={styles.similarMoviesHeader}>Similar movies</Text>
-                    <ScrollView style={styles.allSimilarMoviesContainer} horizontal={true}>
-                        {similarMovieData?.map((singleMovie: similarMovieDataInterface) => {
-                            return <View key={singleMovie.id} style={styles.singleSmilarMovie}>
-                                <Text style={styles.similarMovieTitle}>{singleMovie.original_title}</Text>
-                                <Image
-                                    style={styles.similarMoviePoster}
-                                    source={{uri: `https://image.tmdb.org/t/p/w200/${singleMovie.poster_path}`}}
-                                    defaultSource={require('../defaultPhoto.jpeg')}
-                                />
-                                <TouchableOpacity style={styles.similarMovieInDepthButton} onPress={()=>{props.showPage(`${singleMovie.id}`);}}><Text style={{textAlign: 'center'}}>In depth</Text></TouchableOpacity>
-                            </View>
-                        })}
-                    </ScrollView>
-                    <TouchableOpacity style={styles.watchTrailerButton} onPress={()=>{props.showPage(`trailer-${props.id}`)}}><Text style={styles.watchTrailerText}>Watch trailer</Text></TouchableOpacity>
-                </ScrollView>
+                    <TouchableOpacity style={styles.similarMovieInDepthButton} onPress={()=>{props.showPage(`${singleMovie.id}`);}}><Text style={{textAlign: 'center'}}>In depth</Text></TouchableOpacity>
+                  </View>
+                }) : <Text style={styles.infoText}>failed to load similar movies. Try again later.</Text>}
+
+              </ScrollView>
+                <TouchableOpacity style={styles.watchTrailerButton} onPress={()=>{props.showPage(`trailer-${props.id}`)}}><Text style={styles.watchTrailerText}>Watch trailer</Text></TouchableOpacity>
+              </ScrollView>
 
                 
             </View>
+            : <>
+            {movieData === null ? <Text style={styles.loadingText}>An error has occured. Please try later.</Text>
             : <Text style={styles.loadingText}>Loading...</Text>}
-        </View>
+            </>}
+
+          </View>
     );
 }
 

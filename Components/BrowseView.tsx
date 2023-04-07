@@ -17,27 +17,34 @@ interface props{
 export default function BrowseView(props: props) {
 
     const [request, setRequest] = useState<string>('mostPopular');
-    const [movieData, setMovieData] = useState<movieDataInterface[] | null>(null);
-    
-    async function movieFetch(link: string){
-        fetch(link)
-        .then(response=>{response.json()
-        .then(data => {
-            let movieDataTemp:  movieDataInterface[] = [];
-            
-            data.results.forEach((singleMovie: any)=>{ // a lot of information about a movie, no need to specify all of it
-                
-                movieDataTemp.push({
-                    original_title: singleMovie.original_title,
-                    poster_path: singleMovie.poster_path,
-                    popularity: singleMovie.popularity,
-                    vote_average: singleMovie.vote_average,
-                    id: singleMovie.id
-                })
-            })
-            setMovieData(movieDataTemp);
+    const [movieData, setMovieData] = useState<movieDataInterface[] | null | undefined>(undefined);
+    const [error, setError] = useState<boolean>(false);
 
-        })})
+    async function movieFetch(link: string){
+      fetch(link)
+      .then(possibleError => {
+        if(possibleError.ok) return possibleError;
+        throw new Error(possibleError.statusText);
+      })
+      .then(response => response.json()
+      .then(data => {
+        let movieDataTemp:  movieDataInterface[] = [];
+        
+        data.results.forEach((singleMovie: any)=>{ // a lot of information about a movie, no need to specify all of it
+          movieDataTemp.push({
+              original_title: singleMovie.original_title,
+              poster_path: singleMovie.poster_path,
+              popularity: singleMovie.popularity,
+              vote_average: singleMovie.vote_average,
+              id: singleMovie.id
+          })
+        })
+        setMovieData(movieDataTemp);
+      })
+    )
+    .catch(err => {
+      setMovieData(null)
+    })
     }
 
     useEffect(()=>{
@@ -129,22 +136,26 @@ export default function BrowseView(props: props) {
         </View>
         <View style={{flex: 7}}>  
         <ScrollView>
-            {movieData?.map((singleMovie: movieDataInterface)=>{
+            {movieData !== null && movieData !== undefined ? movieData.map((singleMovie: movieDataInterface)=>{
              return <View style={styles.movieView} key={singleMovie.id}>
-                        <View style={styles.movieViewInformation}>
-                            <Text style={styles.movieName}>{singleMovie.original_title}</Text>
-                            <Text>Id: {singleMovie.id}</Text>
-                            <Text style={{textAlign: 'center'}}>Popularity rating: {singleMovie.popularity}</Text>
-                            <Text style={{textAlign: 'center'}}>Vote average: {singleMovie.vote_average}</Text>
-                            <TouchableOpacity style={styles.inDepthButton} onPress={()=>{props.showPage(`${singleMovie.id}`)}}><Text style={{textAlign: 'center', fontWeight: 'bold'}}>In depth</Text></TouchableOpacity>
-                        </View>
-                        <Image
-                            style={styles.poster}
-                            source={{uri: `https://image.tmdb.org/t/p/w200/${singleMovie.poster_path}`}}
-                            defaultSource={require('../defaultPhoto.jpeg')}
-                        />
+                      <View style={styles.movieViewInformation}>
+                        <Text style={styles.movieName}>{singleMovie.original_title}</Text>
+                        <Text>Id: {singleMovie.id}</Text>
+                        <Text style={{textAlign: 'center'}}>Popularity rating: {singleMovie.popularity}</Text>
+                        <Text style={{textAlign: 'center'}}>Vote average: {singleMovie.vote_average}</Text>
+                        <TouchableOpacity style={styles.inDepthButton} onPress={()=>{props.showPage(`${singleMovie.id}`)}}><Text style={{textAlign: 'center', fontWeight: 'bold'}}>In depth</Text></TouchableOpacity>
+                      </View>
+                      <Image
+                        style={styles.poster}
+                        source={{uri: `https://image.tmdb.org/t/p/w200/${singleMovie.poster_path}`}}
+                        defaultSource={require('../defaultPhoto.jpeg')}
+                      />
                     </View>
-            })}
+            }) : 
+            <>
+            {movieData === null ? <Text style={{fontSize: 20, fontWeight: '500'}}>An error has occured fetching data</Text>
+            : <Text style={{fontSize: 20, fontWeight: '500'}}>Loading...</Text>}
+            </>}
         </ScrollView>
         </View>
 

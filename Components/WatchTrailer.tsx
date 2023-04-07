@@ -11,47 +11,50 @@ interface props{
 }
 
 export default function WatchTrailer(props: props) {
-    const [officialTrailerId, setOfficialTrailerId] = useState<string>('');
+    const [officialTrailerId, setOfficialTrailerId] = useState<string | null | undefined>('');
 
     useEffect(()=>{
-        fetch(`https://api.themoviedb.org/3/movie/` + props.id + `/videos?api_key=` + APIkey + `&language=en-US`)
-          .then(result => { result.json()
-          .then(data => {
-            data.results.forEach((singleVideo: any, index: number) => {
-                if(singleVideo.type === 'Trailer' && singleVideo.official === true && singleVideo.site === 'YouTube'){
-                    setOfficialTrailerId(singleVideo.key);
-                    return;
-                } else if(index === data.results.length - 1){ // if no official trailers exist, show whichever one
-                  setOfficialTrailerId(singleVideo.key);
-                }
-            })
+      fetch(`https://api.themoviedb.org/3/movie/` + props.id + `/videos?api_key=` + APIkey + `&language=en-US`)
+        .then(possibleError => {
+          if(possibleError.ok) return possibleError;
+
+          throw new Error(possibleError.statusText);
+        })
+        .then(result => result.json()
+        .then(data => {
+          if(data.results.length === 0){
+            setOfficialTrailerId(undefined);
+            return
+          }
+
+          data.results.forEach((singleVideo: any, index: number) => {
+            if(singleVideo.type === 'Trailer' && singleVideo.official === true && singleVideo.site === 'YouTube'){
+              setOfficialTrailerId(singleVideo.key);
+              return;
+            } else if(index === data.results.length - 1){ // if no official trailers exist, show whichever one
+              setOfficialTrailerId(singleVideo.key);
+            }
           })
-          })
+        })
+        )
+        .catch(err => setOfficialTrailerId(null))
     },[])
     return (
 
         <View style={styles.container}>
-        <YoutubePlayer
-          height={500}
-          width={Dimensions.get('window').width}
-          play={true}
-          videoId={officialTrailerId}
-         webViewProps={{
-            //  allowsInlineMediaPlayback: false,
-            //  androidLayerType:'none',
-            //  androidHardwareAccelerationDisabled:false,
-            //  mixedContentMode:'always',
-            //  javaScriptEnabled:true,
-            //  domStorageEnabled:true,
-            //  startInLoadingState:true,
-            //  originWhitelist:["*"],
-            //  style:{flex:1},
- 
-         }}
-        
-         forceAndroidAutoplay
-        />
-      <TouchableOpacity onPress={()=>{props.showPage(props.id)}} style={styles.button}><Text style={styles.buttonText}>Go back</Text></TouchableOpacity>
+          {officialTrailerId !== null && officialTrailerId !== undefined ? 
+          <YoutubePlayer
+            height={500}
+            width={Dimensions.get('window').width}
+            play={true}
+            videoId={officialTrailerId}
+            forceAndroidAutoplay
+          /> 
+          : <>
+          {officialTrailerId === undefined ? <Text style={{fontSize: 20, margin: 20}}>No trailer available.</Text> : <Text style={{fontSize: 20,margin: 20}}>Trailer loading error. Try again later.</Text>}
+          </> }
+
+          <TouchableOpacity onPress={()=>{props.showPage(props.id)}} style={styles.button}><Text style={styles.buttonText}>Go back</Text></TouchableOpacity>
         </View>
     );
 }
