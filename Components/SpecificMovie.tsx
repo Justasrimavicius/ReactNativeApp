@@ -12,7 +12,7 @@ interface movieData{
     overview: string,
     popularity: number,
     release_date: string,
-    revenue: number,
+    revenue: number | null,
     tagline: string,
     poster_path: string
 }
@@ -36,7 +36,7 @@ export default function SpecificMovie(props: props) {
                 overview: data.overview,
                 popularity: data.popularity,
                 release_date: data.release_date,
-                revenue: data.revenue,
+                revenue: data.revenue || null,
                 tagline: data.tagline,
                 poster_path: data.poster_path
             })
@@ -71,7 +71,8 @@ export default function SpecificMovie(props: props) {
                     />
                     <View style={styles.lowerInfo}>
                         <Text style={styles.infoText}>Popularity rating: {movieData.popularity.toFixed(2)}</Text>
-                        <Text style={styles.infoText}>Revenue: {(movieData.revenue).toLocaleString('en-US', {style: 'currency', currency: 'USD',})}({(movieData.revenue/1000000).toFixed(2)}m $)</Text>
+                        {movieData.revenue !== null ? <Text style={styles.infoText}>Revenue: {(movieData.revenue).toLocaleString('en-US', {style: 'currency', currency: 'USD',})}({(movieData.revenue/1000000).toFixed(2)}m $)</Text>
+                        : <Text style={styles.infoText}>Revenue: No information/Not yet released</Text>}
                         <Text style={{...styles.infoText, width: Dimensions.get('window').width, textAlign: 'center', paddingBottom: 0}}>Released/To be released on {movieData.release_date}</Text>
                         <Text style={{...styles.infoText, marginTop: 20 }}>{movieData.overview}</Text>
                     </View>
@@ -89,7 +90,7 @@ export default function SpecificMovie(props: props) {
                             </View>
                         })}
                     </ScrollView>
-                    <TouchableOpacity style={styles.watchTrailerButton}><Text style={styles.watchTrailerText}>Watch trailer</Text></TouchableOpacity>
+                    <TouchableOpacity style={styles.watchTrailerButton} onPress={()=>{props.showPage(`trailer-${props.id}`)}}><Text style={styles.watchTrailerText}>Watch trailer</Text></TouchableOpacity>
                 </ScrollView>
 
                 
